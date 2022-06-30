@@ -36,8 +36,9 @@ K_virt = np.asarray([[f, 0, w/2],[0, f, h/2],[0, 0, 1]])
 
 H = {}
 for key in all_camera_matrices:
-    K_temp, = build_intrinsic_matrix(camera_intrinsics[1])
-    H[key], = compute_homography(Pv[key-1], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
+    #K_temp, = build_intrinsic_matrix(camera_intrinsics[1])
+    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
+    H[key],plane_new,P_real_new[key],P_virt_trans = compute_homography(Pv[key-1], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
 #%%  
 top_view_images = {}
 for i in range(len(imgs)):
