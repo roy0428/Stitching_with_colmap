@@ -60,10 +60,4 @@ for j in range(w):
             if stitched_image[j][k][0] != 0:
                 break
 output = 'stitched_image.jpg'
-cv.imwrite(output, stitched_image[...,::-1])             
-            
-    
-    
-    
-    
-    
+cv.imwrite(output, stitched_image[...,::-1])              
