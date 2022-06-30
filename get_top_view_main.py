@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import cv2 as cv
-#%%
+
 image_dir = r'D:/research/image_stitch_with_colmap/data_327/'
 real_image_dir = image_dir + 'images/'
 cameras, points3D, images = get_data_from_binary(image_dir)
@@ -55,9 +55,12 @@ for j in range(w):
     print('Loop is on: %.2f' % (j/w*100) + '%')
     for k in range(h):
         for i in range(len(top_view_images)):
-            if stitched_image[j][k][0] == 0:
+            #if stitched_image[j][k][0] == 0:
+                #stitched_image[j][k] = top_view_images[i][j][k]
+            #if stitched_image[j][k][0] != 0:
+                #break
+            if top_view_images[i][j][k][0] != 0:
                 stitched_image[j][k] = top_view_images[i][j][k]
-            if stitched_image[j][k][0] != 0:
                 break
 output = 'stitched_image.jpg'
 cv.imwrite(output, stitched_image[...,::-1])              
