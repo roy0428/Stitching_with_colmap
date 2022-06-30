@@ -50,6 +50,7 @@ for i in range(len(imgs)):
     cv.imwrite(output, test[...,::-1])
     top_view_images[i] = test
 #%%
+#only pick one image for each pixel
 stitched_image = np.zeros((h, w, 3))
 for j in range(w):
     print('Loop is on: %.2f' % (j/w*100) + '%')
@@ -63,4 +64,18 @@ for j in range(w):
                 stitched_image[j][k] = top_view_images[i][j][k]
                 break
 output = 'stitched_image.jpg'
-cv.imwrite(output, stitched_image[...,::-1])              
+cv.imwrite(output, stitched_image[...,::-1])   
+#%%
+#use average value for each pixel
+stitched_image = np.zeros((h, w, 3))
+for j in range(w):
+    print('Loop is on: %.2f' % (j/w*100) + '%')
+    for k in range(h):
+        count = 0
+        for i in range(len(top_view_images)):
+            if top_view_images[i][j][k][0] != 0:
+                stitched_image[j][k] += top_view_images[i][j][k]
+                count += 1
+        stitched_image[j][k] = stitched_image[j][k] / count
+output = 'stitched_image.jpg'
+cv.imwrite(output, stitched_image[...,::-1])       
