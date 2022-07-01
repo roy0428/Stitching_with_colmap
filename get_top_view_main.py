@@ -4,7 +4,6 @@ from help_scripts.python_scripts.color_virtual_image import *
 from help_scripts.python_scripts.undistortion import compute_all_maps
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import cv2 as cv
 
 image_dir = r'D:/research/image_stitch_with_colmap/data_327/'
@@ -40,7 +39,7 @@ for key in all_camera_matrices:
     K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
     H[key],plane_new,P_real_new[key],P_virt_trans = compute_homography(Pv[key-1], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
 #%%  
-top_view_images = {}
+top_view_images = []
 for i in range(len(imgs)):
     M = np.matmul(K_virt,np.linalg.inv(H[i+1]))
     M = np.matmul(M,np.linalg.inv(K_temp))
@@ -48,21 +47,13 @@ for i in range(len(imgs)):
     test = cv.warpPerspective(imgs[i+1], M, (w, h))
     output = 'result-%d' % (i+1) + '.jpg'
     cv.imwrite(output, test[...,::-1])
-    top_view_images[i] = test
+    top_view_images.append(test)
 #%%
 #only pick one image for each pixel
 stitched_image = np.zeros((h, w, 3))
-for j in range(w):
-    print('Loop is on: %.2f' % (j/w*100) + '%')
-    for k in range(h):
-        for i in range(len(top_view_images)):
-            #if stitched_image[j][k][0] == 0:
-                #stitched_image[j][k] = top_view_images[i][j][k]
-            #if stitched_image[j][k][0] != 0:
-                #break
-            if top_view_images[i][j][k][0] != 0:
-                stitched_image[j][k] = top_view_images[i][j][k]
-                break
+for image in top_view_images:
+    stitched_image = np.where(stitched_image == 0, image, stitched_image)
+    
 output = 'stitched_image.jpg'
 cv.imwrite(output, stitched_image[...,::-1])   
 #%%
