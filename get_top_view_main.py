@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 
-image_dir = r'D:/research/image_stitch_with_colmap/data_327/'
+image_dir = r'D:/research/image_stitch_with_colmap/data_300/'
 real_image_dir = image_dir + 'images/'
 cameras, points3D, images = get_data_from_binary(image_dir)
 
@@ -28,15 +28,16 @@ for key in images.keys():
     camera_intrinsics[images[key].camera_id] = cameras[images[key].camera_id]
 
 Pv = create_virtual_camera_for_each_images_based_on_center(all_camera_matrices,plane)
-w = 4000   #5000
-h = 4000   #5000
+w = 3000   #5000
+h = 3000   #5000
 f = 600    #1000
 K_virt = np.asarray([[f, 0, w/2],[0, f, h/2],[0, 0, 1]])
-
+#%%
 H = {}
+P_real_new = {}
 for key in all_camera_matrices:
-    #K_temp, = build_intrinsic_matrix(camera_intrinsics[1])
-    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
+    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[1])
+    #K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
     H[key],plane_new,P_real_new[key],P_virt_trans = compute_homography(Pv[key-1], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
 #%%  
 top_view_images = []
