@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 
-image_dir = r'D:/research/image_stitch_with_colmap/data_327/'
+image_dir = r'D:/research/image_stitch_with_colmap/data_300_v/'
 real_image_dir = image_dir + 'images/'
 cameras, points3D, images = get_data_from_binary(image_dir)
 
@@ -30,21 +30,21 @@ for key in images.keys():
 Pv = create_virtual_camera_for_each_images_based_on_center(all_camera_matrices,plane)
 w = 4000   #5000
 h = 4000   #5000
-f = 600    #1000
+f = 800    #1000
 K_virt = np.asarray([[f, 0, w/2],[0, f, h/2],[0, 0, 1]])
 #%%
 H = {}
 P_real_new = {}
+K_temp = {}
 for key in all_camera_matrices:
-    # K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[1])
-    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
+    K_temp[key], dist_temp = build_intrinsic_matrix(camera_intrinsics[1])
+    #K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
     H[key],plane_new,P_real_new[key],P_virt_trans = compute_homography(Pv[key], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
 #%%  
 top_view_images = []
 for key in imgs.keys():
-    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
     M = np.matmul(K_virt,np.linalg.inv(H[key]))
-    M = np.matmul(M,np.linalg.inv(K_temp))
+    M = np.matmul(M,np.linalg.inv(K_temp[key]))
     M = M  / M[-1][-1]
     test = cv.warpPerspective(imgs[key], M, (w, h))
     output = 'result-%d' % (key) + '.jpg'
@@ -60,15 +60,26 @@ output = 'stitched_image.jpg'
 cv.imwrite(output, stitched_image[...,::-1])   
 #%%
 #use average value for each pixel
-stitched_image = np.zeros((h, w, 3))
-for j in range(w):
-    print('Loop is on: %.2f' % (j/w*100) + '%')
-    for k in range(h):
-        count = 0
-        for i in range(len(top_view_images)):
-            if top_view_images[i][j][k][0] != 0:
-                stitched_image[j][k] += top_view_images[i][j][k]
-                count += 1
-        stitched_image[j][k] = stitched_image[j][k] / count
-output = 'stitched_image.jpg'
-cv.imwrite(output, stitched_image[...,::-1])       
+#stitched_image = np.zeros((h, w, 3))
+#for j in range(w):
+    #print('Loop is on: %.2f' % (j/w*100) + '%')
+    #for k in range(h):
+        #count = 0
+        #for i in range(len(top_view_images)):
+            #if top_view_images[i][j][k][0] != 0:
+                #stitched_image[j][k] += top_view_images[i][j][k]
+                #count += 1
+        #stitched_image[j][k] = stitched_image[j][k] / count
+#output = 'stitched_image.jpg'
+#cv.imwrite(output, stitched_image[...,::-1]) 
+#%%
+cut_imgs = {}
+for key in imgs.keys():
+    print(key)
+    img = np.zeros((imgs[key].shape[0], imgs[key].shape[1], 3))
+    img[1000:] = imgs[key][1000:]
+    cut_imgs[key] = img
+    del img
+
+
+      
