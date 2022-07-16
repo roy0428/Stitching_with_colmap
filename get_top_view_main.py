@@ -26,38 +26,53 @@ for key in images.keys():
     imgs[key] = np.asarray(plt.imread(real_image_dir + images[key].name))
     all_camera_matrices[key] = camera_quat_to_P(images[key].qvec, images[key].tvec)
     camera_intrinsics[images[key].camera_id] = cameras[images[key].camera_id]
+    
 #%%
 Pv = create_virtual_camera_for_each_images_based_on_center(all_camera_matrices,plane)
 w = 4000   #5000
 h = 4000   #5000
 f = 800    #1000
 K_virt = np.asarray([[f, 0, w/2],[0, f, h/2],[0, 0, 1]])
+
 #%%
 H = {}
 P_real_new = {}
-K_temp = {}
+#K_temp = {}
 for key in all_camera_matrices:
-    K_temp[key], dist_temp = build_intrinsic_matrix(camera_intrinsics[1])
-    #K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[key])
+    K_temp, dist_temp = build_intrinsic_matrix(camera_intrinsics[images[key].camera_id])
     H[key],plane_new,P_real_new[key],P_virt_trans = compute_homography(Pv[key], all_camera_matrices[key]['P'], K_virt, K_temp, plane)
+    
 #%%  
+cut = False
+if cut == True:
+    cut_imgs = {}
+    crop_size = 2888
+    for key in imgs.keys():
+        print(key)
+        img = np.concatenate((np.zeros((imgs[key].shape[0] - crop_size, imgs[key].shape[1], 3), dtype = np.uint8), imgs[key][-crop_size:]))
+        cut_imgs[key] = img
+        
+#%%
 top_view_images = []
 for key in imgs.keys():
-    M = np.matmul(K_virt,np.linalg.inv(H[key]))
-    M = np.matmul(M,np.linalg.inv(K_temp[key]))
-    M = M  / M[-1][-1]
-    test = cv.warpPerspective(imgs[key], M, (w, h))
+    if cut == False:
+        result = cv.warpPerspective(imgs[key], H[key], (w, h))
+    else:   
+        result = cv.warpPerspective(cut_imgs[key], H[key], (w, h))
     output = 'result-%d' % (key) + '.jpg'
-    cv.imwrite(output, test[...,::-1])
-    top_view_images.append(test)
+    cv.imwrite(output, result[...,::-1])
+    top_view_images.append(result)
+    
 #%%
 #only pick one image for each pixel
 stitched_image = np.zeros((h, w, 3))
+#top_view_images.reverse()
 for image in top_view_images:
     stitched_image = np.where(stitched_image == 0, image, stitched_image)
     
-output = 'stitched_image.jpg'
-cv.imwrite(output, stitched_image[...,::-1])   
+output = 'stitched_image.reverse.jpg'
+cv.imwrite(output, stitched_image[...,::-1])  
+ 
 #%%
 #use average value for each pixel
 #stitched_image = np.zeros((h, w, 3))
@@ -72,14 +87,6 @@ cv.imwrite(output, stitched_image[...,::-1])
         #stitched_image[j][k] = stitched_image[j][k] / count
 #output = 'stitched_image.jpg'
 #cv.imwrite(output, stitched_image[...,::-1]) 
-#%%
-cut_imgs = {}
-for key in imgs.keys():
-    print(key)
-    img = np.zeros((imgs[key].shape[0], imgs[key].shape[1], 3))
-    img[1000:] = imgs[key][1000:]
-    cut_imgs[key] = img
-    del img
 
 
       
