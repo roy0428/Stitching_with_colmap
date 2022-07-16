@@ -202,7 +202,7 @@ def get_top_view_every_ten(plane,Pvirtual,w_virtual,h_virtual,images,cams,intrin
     #top_view_image = np.zeros((h_virtual,w_virtual, 3))
     for i in range(len(images)): 
         top_view_image = np.zeros((h_virtual,w_virtual, 3))
-        if (5-i) % 10 == 0:
+        if (i) % 10 == 0:
             print('Number : ', i)
             for y in range(0,h_virtual):
                 print('Loop is on: %.2f' % (y/h_virtual*100) + '%')
@@ -212,8 +212,7 @@ def get_top_view_every_ten(plane,Pvirtual,w_virtual,h_virtual,images,cams,intrin
                         # color_images[key][y, x, :] = color[i]
                     if color[0] is not None:   
                         top_view_image[y,x,:] = color[0]
-            top_view_images.append(top_view_image)
-            
+            top_view_images[i] = top_view_image
             output = 'result-%d' % i + '.jpg'
             cv.imwrite(output, top_view_image[...,::-1])
             
@@ -358,21 +357,16 @@ def create_virtual_camera_for_each_images_based_on_center(camera_matrices,plane)
     Rvirt = np.asarray([[xnew[0], xnew[1], xnew[2]],[ynew[0], ynew[1], ynew[2]],
                         [virt_principal_axis[0],virt_principal_axis[1],virt_principal_axis[2]]],dtype='float')
 
-    for i in range(len(centers)):
+    for key in camera_matrices:
         #virt_center = all_center
         tvirt = np.asarray(np.matmul(-Rvirt,np.asarray([virt_center[0][0],virt_center[1][0],virt_center[2][0]])),dtype='float')
-        Pvirt[i] = np.column_stack((Rvirt,tvirt))
+        Pvirt[key] = np.column_stack((Rvirt,tvirt))
 
     return Pvirt
 
 
 def compute_homography(P_virt, P_real, K_virt, K_real, plane):
     # Determine rotational matrices and translation vectors:
-    print('plane: ',plane)
-    print('pvirt: ',P_virt)
-    print('preal: ', P_real)
-    print(P_virt)
-
     #create transform
     P_transform = np.vstack((P_virt,[0, 0, 0, 1]))
 
@@ -406,5 +400,9 @@ def compute_homography(P_virt, P_real, K_virt, K_real, plane):
     n = plane_new[0:3].reshape(1,3)
     #calculate H
     H = P_real_trans[0:3,0:3] - (t_real_trans@n)/(plane_new[3])
-    return H,plane_new,P_real_trans,P_virt_trans
-
+    
+    M = np.matmul(K_virt,np.linalg.inv(H))
+    M = np.matmul(M,np.linalg.inv(K_real))
+    M = M  / M[-1][-1]
+    
+    return M, plane_new, P_real_trans, P_virt_trans
